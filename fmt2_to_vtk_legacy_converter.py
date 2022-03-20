@@ -2,7 +2,7 @@ from base_vtk_legacy_converter import BaseVtkLegacyConverter
 
 import math
 
-class Fmt2Converter(BaseVtkLegacyConverter):
+class fmt2_to_vtk_legacy_converter(BaseVtkLegacyConverter):
 
     def ReadFile(self, in_file_name):
         f = open(in_file_name, 'r')
@@ -45,5 +45,5 @@ if __name__ == "__main__":
     in_obj_file = "C:\\Users\\xx03d\\Downloads\\data-20220318T064025Z-001\\data.fmt2"
     out_obj_file = "C:\\Users\\xx03d\\Downloads\\data-20220318T064025Z-001\\data2.vtk"
 
-    converter = Fmt2Converter()
+    converter = fmt2_to_vtk_legacy_converter()
     converter.Execute(in_obj_file, out_obj_file)
