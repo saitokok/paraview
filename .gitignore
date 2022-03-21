@@ -1,0 +1,5 @@
+# Ignore *.vtk because don't wanna commit output-files.
+*.vtk
+
+# Ignore *.fmt* because don't wanna accidentally commit input-files.
+*.fmt*
