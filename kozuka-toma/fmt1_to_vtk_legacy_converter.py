@@ -31,13 +31,13 @@ class Fmt1ToVtkLegacyConverter(BaseVtkLegacyConverter):
         # [points]の各行を処理
         for point in points_list:
             tmp = point.split(",")
-            self.object_3d.points.append([tmp[1], tmp[2], tmp[3]])  # pointIDのリストを書き込み
+            self.object_3d.points.append([tmp[1], tmp[2], tmp[3]])  # x,y,zの書式で書き込み
 
         # [cells_list]の各行を処理
         for cell in cells_list:
             tmp = cell.split(",")
-            self.object_3d.cells.append([tmp[2], tmp[3], tmp[4]])  # cellTypeを書き込み
-            self.object_3d.cell_types.append(tmp[0])
+            self.object_3d.cells.append([tmp[2], tmp[3], tmp[4]])  # pointIDのリストを書き込み
+            self.object_3d.cell_types.append(tmp[0])  # cellTypeを書き込み
 
     # デバッグ用。リスト渡すと途中を省略して表示してくれるよ
     def PrintListItems(self, list):
