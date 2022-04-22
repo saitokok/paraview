@@ -38,10 +38,16 @@ class Fmt1ToVtkLegacyConverter(BaseVtkLegacyConverter):
             tmp = cell.split(",")
             self.object_3d.cells.append([tmp[2], tmp[3], tmp[4]])  # x,y,zの書式で書き込み
             self.object_3d.cell_types.append(tmp[0])
+        self.PrintListItems(cells_list)
 
-    # デバッグ用に作ってるだけ。リスト渡すとキレイに表示してくれるよ
+    # デバッグ用。リスト渡すと途中を省略して表示してくれるよ
     def PrintListItems(self, list):
         print("+++++++++++++++++++++++++++++++++++++++++++++++++++")
-        for item in list:
-            print(item)
+        for i, item in enumerate(list):
+            if i <= 10:
+                print(item)
+            if i == 11:
+                print("...")
+            if i >= len(list) - 10:
+                print(item)
         print("__________________________________________________")
