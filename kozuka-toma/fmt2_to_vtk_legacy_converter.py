@@ -40,13 +40,13 @@ class Fmt2ToVtkLegacyConverter(BaseVtkLegacyConverter):
 
         # [points_list]の各行を処理
         for point in points_list:
-            tmp = re.findall("(?<=\().+?(?=\))", point)[0]
+            tmp = re.findall("(?<=\().+?(?=\))", point)[0]  # ()の中身を抽出
             tmp = tmp.split(",")
             self.object_3d.points.append([tmp[0], tmp[1], tmp[2]])  # x,y,zの書式で書き込み
 
         # [cells_list]の各行を処理
         for cell in cells_list:
-            tmp = re.findall("(?<=\().+?(?=\))", cell)[0]
+            tmp = re.findall("(?<=\().+?(?=\))", cell)[0]  # ()の中身を抽出
             tmp = tmp.split(",")
             self.object_3d.cells.append([tmp[0], tmp[1], tmp[2]])  # pointIDのリストを書き込み
 
