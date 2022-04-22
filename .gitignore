@@ -3,3 +3,5 @@
 
 # Ignore *.fmt* because don't wanna accidentally commit input-files.
 *.fmt*
+
+*__pycache__
