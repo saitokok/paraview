@@ -73,6 +73,8 @@ class BaseVtkLegacyConverter(object):
         ret_cell_type = -1
         if cell_type_str == "tri":
             ret_cell_type = 5
+        elif cell_type_str == "quad":
+            ret_cell_type = 9
         elif cell_type_str == "tetra":
             ret_cell_type = 10
         return ret_cell_type
