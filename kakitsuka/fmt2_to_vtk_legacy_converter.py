@@ -22,52 +22,87 @@ class Fmt2ToVtkLegacyConverter(BaseVtkLegacyConverter):
             del points_header
             del cells_header
             del cell_types_header
+
             #頂点情報を保持する. points_body には添字情報が含まれるため除去する
             self.object_3d.points = [[x, y, z] for id, x, y, z, _ in points_body]
-            self.object_3d.cells = [[x, y, z] for _id, x, y, z, _ in cells_body]
+            self.object_3d.cells = [[point_id_1, point_id_2,point_id_3] for _id, point_id_1, point_id_2,point_id_3, _ in cells_body]
             self.object_3d.cell_types = [types[0] for types in cell_types_body]
-        
 
-
-
-    def Tokenize(self, data : List[str], marks : List[str], separators : List[List[str]]) -> List[List[str]]:
-        blocks : List[List[List[str]]] = [] 
-        block :List[List[str]] = []
-
-        _marks : Iterator[str] = marks.__iter__()
-        _separators : Iterator[str] = separators.__iter__()
-
-        current_mark : str = _marks.__next__()      #各ブロックを隔てる識別子. current_separators より1要素先に iter を進める. 先に枯れる
-        current_separators : List[str] = None       #各ブロック内で繰り返される要素の分割文字. current_mark より1要素ずつ遅れて iter をすすめる. 後に枯れる
-
-        for line in data:                
-            #現在行が最下端のブロックではない, かつ 現在行がブロックの切り替え行である
-            if((not(current_mark is None)) and (current_mark in line)):
-                if(not(current_separators is None)):
-                    blocks.append(block.copy())
-                    block.clear()
-                current_mark = self.nextIfExists(_marks, None)
-                current_separators = self.nextIfExists(_separators, None)
-                if(current_separators is None):
-                    break
-            #現在行がブロックの途中であり, それは最初の識別子より後である
-            elif(not(current_separators is None)):
-                #空白は無視する
-                if(not line == ""):
-                    block.append(self.SeparateBlock(line, current_separators))
-        #最終ブロック分を追加
-        blocks.append(block.copy())
-        del block
-        return blocks
-
-    def SeparateBlock(self, data : str, separators : List[str]) -> List[str]:
+    def Tokenize(self, data : List[str], marks : List[str], separators : List[List[str]]) -> List[List[List[str]]]:
         """
+        異なる構造の集合の集合 data を marks で分割して
+        各分割ブロックを separators で更に分割して返します.
+        marks[n] 直後から marks[n+1] 番目の直前までを separators[n] で分割します.
+
+        example:
+            data : [
+                "mark_1", "aXb", "cXd",
+                "mark_2", "1P2Q3", "4P5Q6", "7P8Q9"
+            ]
+            marks : ["marks_1", "mark_2"]
+            separators : [
+                ["X"], 
+                ["P", "Q"]
+            ]
+
+            --> return [
+                [["a", "b"], ["c", "d"]],
+                [["1", "2", "3"], ["4", "5", "6"],["7", "8", "9"]]
+            ]
+
 
         Args:
-            data (List[str]):    Non-tokenized data
-            separators (List[str]): Marker for separator
-                example: ["[points]", "---", "[cells]", "---"]
+            data (List[str]): 異なる構造の集合の集合
+            marks (List[str]): 異なる構造を隔てるマーカー
+            separators (List[List[str]]): 各構造毎の分割文字列
 
+        Returns:
+            List[List[List[str]]]: 複数の異なる2次元構造の集合の集合
+        """
+        blocks : List[List[List[str]]] = []         #複数の2次元配列構造の集合の集合. 
+                                                    # List[str] が 単一行を指す
+                                                    # List[List[str]] が同じ構造の行集合
+                                                    # List[List[List[str]]] が異なる構造の行集合の集合
+        block  : List[List[str]] = []               #blocks における List[List[str]]部分
+
+        lines_iter = data.__iter__()                #各行を返す Iterator
+        marks_iter = marks.__iter__()               #構造変化の目印を返す Iterator
+        separators_iter = separators.__iter__()     #各構造ごとの区切り文字を返す Iterator
+
+        #mark, separator は一つずつズレて iter を進める(markが先行)
+        mark = self.NextIfExists(marks_iter, None)
+        separator = None
+
+        while True:
+            line = self.NextIfExists(lines_iter, None)
+            if line == mark: 
+                #構造変化マーカーを検知した
+                mark = self.NextIfExists(marks_iter, None)
+                separator = self.NextIfExists(separators_iter, None)
+                blocks.append(block.copy())
+                block.clear()
+                #これ以上下行に構造の指定が無い
+                if separator is None:
+                    break
+            elif line is None: 
+                #すべての行を読み終えた
+                blocks.append(block)
+                break       
+            elif line == "":
+                #該当行が空行である
+                continue
+            else:
+                #いずれかの構造の行である
+                block.append(self.SeparateLine(line, separator))
+        # blocks 先頭要素は先頭の構造変化マーカーより上行のものなので捨てる
+        return blocks[1:]
+
+    def SeparateLine(self, line : str, separators : List[str]) -> List[str]:
+        """
+        Separate a line by separators
+        Args:
+            line (str):    Non-tokenized data ( 1 line str data)
+            separators (List[str]): Marker for separator
         Returns:
             List[str]: separated strings
         """
@@ -75,14 +110,15 @@ class Fmt2ToVtkLegacyConverter(BaseVtkLegacyConverter):
         blocks : List[str] = [] # 1回分の分割結果.
 
         for separator in separators:
-            blocks = data.split(sep=separator, maxsplit=1) #セパレータ文字の前後で分割(最も左側のセパレータで分割)
+            blocks = line.split(sep=separator, maxsplit=1) #セパレータ文字の前後で分割(最も左側のセパレータで分割)
             result.append(blocks[0])                       #分割した文字列の左側を返り値リストに追加
             if(len(blocks) > 1):
-                data = blocks[1]                           #セパレートに成功した場合(2つに分割できた場合), それを分割対象の文字列とする.
-        result.append(data)
+                line = blocks[1]                           #セパレートに成功した場合(2つに分割できた場合), それを分割対象の文字列とする.
+        result.append(line)
         return result
 
-    def nextIfExists(self, iterable : Iterable, default : any) -> any:
+
+    def NextIfExists(self, iterable : Iterable, default : any) -> any:
         """
         return next value if exist.
         otherwise return default.
